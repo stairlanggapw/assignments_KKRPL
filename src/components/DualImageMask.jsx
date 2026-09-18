@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo } from "react"
 import { createMaskController } from "../animations/imageMask"
 import heroPrimary from "../assets/images/hero.png"
 import photo1 from "../assets/images/Photo1.png"
-import photo2 from "../assets/images/photo2.png"
+import photo2 from "../assets/images/Photo2.png"
 
 // Hero uses photos from src/assets/images — secondary prefers photo2, then hero-secondary
 const secondaryModules = import.meta.glob("../assets/images/hero-secondary.png", {

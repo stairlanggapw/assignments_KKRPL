@@ -7,7 +7,7 @@ import OrbitBadge from "../components/OrbitBadge"
 import InteractivePhotoCard from "../components/InteractivePhotoCard"
 // Personal visual — cropped detail, intentionally different from the Hero portrait.
 // Swap this import with a dedicated About photo when one is available.
-import aboutPortrait from "../assets/images/photo2.png"
+import aboutPortrait from "../assets/images/Photo2.png"
 
 const FOCUS_LABELS = ["FRONTEND", "INTERACTION", "MOTION", "CREATIVE CODE"]
 
