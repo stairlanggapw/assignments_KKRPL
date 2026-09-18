@@ -8,7 +8,8 @@ export const site = {
   availability: "Available for new work",
   year: "2026",
   cv: {
-    href: "/cv.pdf",
+    // Relative so it resolves under the GitHub Pages subpath when added to public/
+    href: "./cv.pdf",
     download: "CV_Stefanus_Airlangga.pdf",
     label: "Download CV",
   },
