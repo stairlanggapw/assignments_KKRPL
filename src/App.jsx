@@ -1,61 +1,186 @@
-import { useEffect } from "react"
-import { ScrollTrigger } from "./animations/gsap"
-import { createLenis } from "./animations/lenis"
+import { useEffect, useRef } from "react"
+import { gsap, ScrollTrigger } from "./animations/gsap"
+import { createIntroTyping, createIntroScroll, prefersReducedMotion } from "./animations/intro"
+import { createHeroEntrance } from "./animations/hero"
+import { createOverlappingSections } from "./animations/overlap"
+import { useSmoothScroll } from "./hooks/useSmoothScroll"
+import CustomCursor from "./components/CustomCursor"
+import GalaxyBackground from "./components/GalaxyBackground"
+import ShootingStars from "./components/ShootingStars"
+import SocialIcons from "./components/SocialIcons"
+import Navbar from "./components/Navbar"
+import Hero from "./sections/Hero"
+import About from "./sections/About"
+import Biodata from "./sections/Biodata"
+import Education from "./sections/Education"
+import Organization from "./sections/Organization"
+import Strengths from "./sections/Strengths"
+import Achievements from "./sections/Achievements"
+import Competencies from "./sections/Competencies"
+import Projects from "./sections/Projects"
+import Contact from "./sections/Contact"
+import Footer from "./sections/Footer"
 
 function App() {
-  useEffect(() => {
-    const lenis = createLenis()
+  const introRef = useRef(null)
+  const nameRef = useRef(null)
+  const introContentRef = useRef(null)
+  const heroRef = useRef(null)
+  const navWrapRef = useRef(null)
+  const overlapScopeRef = useRef(null)
+  const aboutWrapRef = useRef(null)
+  const educationWrapRef = useRef(null)
+  const organizationWrapRef = useRef(null)
+  const achievementsWrapRef = useRef(null)
 
-    const handleScroll = () => ScrollTrigger.update()
-    lenis.on("scroll", handleScroll)
+  // Single global Lenis instance — all scroll sync lives in the hook
+  useSmoothScroll()
+
+  useEffect(() => {
+    const reduced = prefersReducedMotion()
+    const introEl = introRef.current
+    const nameEl = nameRef.current
+    const introContentEl = introContentRef.current
+    const heroEl = heroRef.current
+    const navEl = navWrapRef.current
+
+    // One scoped context for all Intro/Hero scroll animations
+    // Ensures duplicate ScrollTriggers are impossible and cleanup is atomic
+    const ctx = gsap.context(() => {
+      if (reduced) {
+        if (nameEl) gsap.set(nameEl, { clearProps: "all" })
+        if (heroEl) gsap.set(heroEl, { clearProps: "all" })
+        if (navEl) gsap.set(navEl, { clearProps: "all" })
+        return
+      }
+
+      if (navEl) gsap.set(navEl, { autoAlpha: 0, y: -8 })
+
+      createIntroTyping(nameEl, {
+        socialItems: introEl?.querySelectorAll("[data-intro-social-item]") ?? [],
+      })
+
+      createIntroScroll({
+        trigger: introEl,
+        target: introContentEl ?? nameEl,
+        nextTarget: heroEl,
+      })
+
+      if (navEl && introEl) {
+        gsap.to(navEl, {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: introEl,
+            start: "55% top",
+            end: "75% top",
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+          overwrite: "auto",
+        })
+      }
+
+      createHeroEntrance(heroEl)
+    }, heroRef)
 
     return () => {
-      lenis.off("scroll", handleScroll)
-      lenis.destroy()
+      ctx.revert()
+      ScrollTrigger.getAll().forEach((t) => {
+        if (t.vars.trigger === introEl || t.vars.trigger === heroEl) t.kill()
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    const sections = [
+      aboutWrapRef.current,
+      educationWrapRef.current,
+      organizationWrapRef.current,
+      achievementsWrapRef.current,
+    ].filter(Boolean)
+
+    const cleanup = createOverlappingSections({
+      sections,
+      scope: overlapScopeRef,
+    })
+
+    return () => {
+      if (typeof cleanup === "function") cleanup()
     }
   }, [])
 
   return (
-    <main className="min-h-screen bg-bg text-text">
-      {/* Foundation placeholder — verifies typography, colors, and smooth scroll */}
-      <section className="mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 py-24 lg:px-8">
-        <p className="mb-4 text-sm tracking-[0.2em] text-cyan uppercase">
-          Dark Technology — Space Aesthetic
-        </p>
-        <h1 className="font-heading max-w-3xl text-4xl leading-[0.95] md:text-5xl lg:text-6xl">
-          Foundation
-          <span className="block text-accent">Ready</span>
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-7 text-text-muted">
-          Space Grotesk untuk heading, Manrope untuk body. Latar gelap,
-          skala tipografi, spacing, breakpoint responsif, dan transisi halus
-          sudah aktif. Lenis dan GSAP + ScrollTrigger terpasang.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-3">
-          <span className="rounded-full border border-border bg-bg-elevated px-4 py-2 text-sm text-text-muted">
-            Lenis: smooth scroll
-          </span>
-          <span className="rounded-full border border-border bg-bg-elevated px-4 py-2 text-sm text-text-muted">
-            GSAP + ScrollTrigger
-          </span>
-          <span className="rounded-full border border-border bg-bg-elevated px-4 py-2 text-sm text-text-muted">
-            Tailwind CSS 4
-          </span>
+    <main id="main-content" className="overflow-x-clip bg-bg text-text">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      <CustomCursor />
+      <GalaxyBackground />
+      <ShootingStars />
+      <div ref={navWrapRef} className="contents">
+        <Navbar />
+      </div>
+
+      <section
+        ref={introRef}
+        aria-label="Intro"
+        className="relative flex h-[100svh] min-h-[100svh] w-full items-center justify-center overflow-hidden px-6"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_700px_420px_at_50%_45%,rgba(107,123,255,0.09),transparent_62%)]"
+        />
+
+        <div ref={introContentRef} className="flex w-full flex-col items-center">
+          <h1
+            ref={nameRef}
+            aria-label="STEFANUS AIRLANGGA P.W"
+            className="font-heading w-full max-w-none px-2 text-center text-[clamp(1.25rem,5vw,4.25rem)] leading-[0.95] font-bold tracking-[-0.03em] text-text md:text-[clamp(1.5rem,4.2vw,4.25rem)] lg:text-[4.25rem]"
+          >
+            {/* Filled by createIntroTyping — single line, standard speed */}
+            STEFANUS AIRLANGGA P.W
+          </h1>
+          <div className="mt-7 motion-reduce:mt-5">
+            <SocialIcons variant="intro" />
+          </div>
         </div>
+
+        <p
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 text-[0.68rem] tracking-[0.22em] text-text-faint uppercase motion-reduce:hidden"
+        >
+          Scroll
+        </p>
       </section>
 
-      {/* Spacer to verify Lenis smooth scroll + ScrollTrigger pin/trigger readiness */}
-      <section className="mx-auto max-w-7xl px-6 pb-32 lg:px-8">
-        <div className="rounded-2xl border border-border bg-bg-elevated p-8 md:p-12">
-          <h2 className="font-heading text-2xl">Scroll test area</h2>
-          <p className="mt-3 max-w-2xl text-text-muted">
-            Area ini sengaja tinggi untuk menguji Lenis. ScrollTrigger sudah
-            terhubung via <code className="rounded bg-bg-soft px-1.5 py-0.5 text-sm text-text">lenis.on(&quot;scroll&quot;, ScrollTrigger.update)</code>
-            . Hero dan section portfolio akan dibangun di tahap berikutnya.
-          </p>
-          <div className="mt-8 h-[60vh] rounded-xl border border-dashed border-border-strong bg-bg-soft/50" />
+      <div ref={heroRef}>
+        <Hero />
+      </div>
+
+      <div ref={overlapScopeRef} className="overflow-x-clip">
+        <div ref={aboutWrapRef} className="relative will-change-transform">
+          <About />
         </div>
-      </section>
+        <div ref={educationWrapRef} className="relative will-change-transform">
+          <Education />
+        </div>
+        <div ref={organizationWrapRef} className="relative will-change-transform">
+          <Organization />
+        </div>
+        <div ref={achievementsWrapRef} className="relative will-change-transform">
+          <Achievements />
+        </div>
+        <Biodata />
+        <Strengths />
+        <Competencies />
+        <Projects />
+        <Contact />
+      </div>
+
+      <Footer />
     </main>
   )
 }
